@@ -1,20 +1,49 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebase.config";
 import { FaTasks } from "react-icons/fa";
 import { GrInProgress } from "react-icons/gr";
 import { IoMdDoneAll } from "react-icons/io";
 import { CiCalendarDate } from "react-icons/ci";
 import { IoTodayOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 
 function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [listings, setListings] = useState([])
+  
+ 
+    useEffect(() => {
+      const fetchListings = async () => {
+        try {
+          const listingsArray = [];
+          const querySnap = await getDocs(collection(db, 'listings'));
+          querySnap.forEach((doc) => {
+            listingsArray.push({
+              id: doc.id,
+              data: doc.data(),
+            });
+          });
+          setListings(listingsArray); // Actualizează starea cu datele
+        } catch (error) {
+          console.log('Eroare', error);
+        }
+      };
+  
+      fetchListings();
+    }, [navigate, listings]); // Efectul va rula o singură dată la montarea componentei
 
-  const pathMatchRoute = (route) => {
-    if (route === location.pathname) {
-      return true;
-    }
-  };
+    //let inProgress = listings.filter(listings => listings.status === 'In Progress')
+    //console.log('In Progess: ', inProgress)
+   // console.log(listings)
+    const inProgressCount = listings.filter(listings => listings.data.status === 'In Progress').length;
+    const completedCount = listings.filter(listings => listings.data.status === 'Completed').length;
+
+    let date = new Date().toLocaleDateString();
+    const todayCount = listings.filter(listings => listings.data.date === date).length;
 
   return (
     <>
@@ -52,13 +81,13 @@ function Navbar() {
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            clip-rule="evenodd"
-            fill-rule="evenodd"
+            clipRule="evenodd"
+            fillRule="evenodd"
             d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
           ></path>
         </svg>
       </button>
-
+    
       <aside
         id="default-sidebar"
         className="fixed left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
@@ -74,7 +103,7 @@ function Navbar() {
                 <FaTasks />
                 <span className="flex-1 ms-3 whitespace-nowrap">All Tasks</span>
                 <span className="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                0
+                {listings.length}          
                 </span>
               </Link>
             </li>
@@ -88,8 +117,7 @@ function Navbar() {
                   In Progress
                 </span>
                 <span className="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                0
-                </span>
+                {inProgressCount} </span>
               </Link>
             </li>
             <li>
@@ -100,7 +128,7 @@ function Navbar() {
                 <IoMdDoneAll />
                 <span className="flex-1 ms-3 whitespace-nowrap">Completed</span>
                 <span className="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                  0
+                 {completedCount}
                 </span>
               </Link>
             </li>
@@ -112,7 +140,7 @@ function Navbar() {
                 <IoTodayOutline />
                 <span className="flex-1 ms-3 whitespace-nowrap">Today</span>
                 <span className="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                0
+                {todayCount}
                 </span>
               </Link>
             </li>
@@ -123,9 +151,7 @@ function Navbar() {
               >
                 <CiCalendarDate />
                 <span className="flex-1 ms-3 whitespace-nowrap">Calendar</span>
-                <span className="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                0
-                </span>
+
               </Link>
             </li>
           </ul>

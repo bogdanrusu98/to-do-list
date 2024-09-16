@@ -2,12 +2,12 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 const firebaseConfig = {
-  apiKey: "AIzaSyBnT8ptzWVmGN6yo9TjAHoRvKmzS6ooogE",
-  authDomain: "house-marketplace-app-e7b14.firebaseapp.com",
-  projectId: "house-marketplace-app-e7b14",
-  storageBucket: "house-marketplace-app-e7b14.appspot.com",
-  messagingSenderId: "1089176571513",
-  appId: "1:1089176571513:web:3f6dd99cfbc9975d184ea8"
+  apiKey: "AIzaSyAnj4DADeNV2fZCHPprQJ_qmKEQ8QhUgCg",
+  authDomain: "to-do-list-a704b.firebaseapp.com",
+  projectId: "to-do-list-a704b",
+  storageBucket: "to-do-list-a704b.appspot.com",
+  messagingSenderId: "984785424285",
+  appId: "1:984785424285:web:77129e3be29c8711f36974"
 };
 
 // Use this to initialize the firebase App
