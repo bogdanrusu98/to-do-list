@@ -2,7 +2,7 @@ import { MdDateRange } from "react-icons/md";
 import { FaRegTrashAlt } from "react-icons/fa";
 import { useState } from "react";
 import { db } from "../firebase.config";
-import {doc, getDoc, updateDoc} from 'firebase/firestore'
+import {doc, getDoc, updateDoc, deleteDoc} from 'firebase/firestore'
 import { FaFlag } from "react-icons/fa";
 import { GrInProgress } from "react-icons/gr";
 import { IoMdDoneAll } from "react-icons/io";
@@ -32,6 +32,18 @@ function Listing({listing, id})
           console.log("No such document!");
         }
       };
+
+      const onDelete = async () => {
+        try {
+          const docRef = doc(db, 'listings', id);
+          
+          await deleteDoc(docRef);
+          navigate('/progress')
+          toast.success('Listing deleted');
+        } catch (error) {
+          toast.error('Failed to delete listing');
+        }
+      };
     
 
   return (
@@ -53,7 +65,7 @@ function Listing({listing, id})
         <IoMdDoneAll className='ms-4 inline text-green-600' onClick={toggleStatus}/>
     )}
 
-    <button className='float-right'><FaRegTrashAlt /></button>
+    <button className='float-right' onClick={onDelete} ><FaRegTrashAlt /></button>
     </div>
   </div>
 

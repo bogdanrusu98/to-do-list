@@ -14,7 +14,7 @@ import Listing from '../components/Listing';
 function Today() {
   const [listings, setListings] = useState([])
     const [loading, setLoading] = useState(true)
-    let date = new Date().toLocaleDateString();
+    let date = new Date().toISOString().split('T')[0]
 
 
   useEffect(() => {
@@ -40,8 +40,9 @@ function Today() {
   }, []); // Efectul va rula o singură dată la montarea componentei
   return (
     <>
-    <div className='mt-6'>
-    <h1 className='max-w-lg text-4xl font-semibold leading-relaxed text-gray-900 dark:text-white inline-block'>Today <span className='text-xl text-gray-500'>({listings.length})</span></h1>
+    <div className='p-4 sm:ml-64'>
+    <div className='p-4 rounded-lg dark:border-gray-700 mt-14'>
+    <h1 className='max-w-lg text-4xl font-semibold leading-relaxed text-gray-900 dark:text-white inline-block  me-4'>Today <span className='text-xl text-gray-500'>({listings.length})</span></h1>
     </div>
 
     <div className="flex flex-wrap gap-4">
@@ -59,6 +60,7 @@ function Today() {
         )
     )}
 
+    </div>
     </div>
     </>
   )

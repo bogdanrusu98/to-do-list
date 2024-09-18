@@ -1,7 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom';
-import { useState, useEffect } from 'react';
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useState, useEffect, useRef } from 'react';
 import { collection, doc, getDocs, addDoc, getDoc, updateDoc } from 'firebase/firestore'
+import { useNavigate } from 'react-router-dom';
 import {db} from '../firebase.config'
 import Modal from 'react-modal';
 import { MdDateRange } from "react-icons/md";
@@ -10,6 +12,7 @@ import { FaFlag } from "react-icons/fa";
 import { GrInProgress } from "react-icons/gr";
 import { IoMdDoneAll } from "react-icons/io";
 import Listing from '../components/Listing';
+import {toast} from 'react-toastify'
 
 
 const customStyles = {
@@ -32,6 +35,9 @@ function Home() {
         importance: '',
         date: '',
     })
+    const auth = getAuth();
+    const navigate = useNavigate();
+    const isMounted = useRef(true);
 
     const {
         title,
@@ -61,28 +67,68 @@ function Home() {
         fetchListings();
       }, []); // Efectul va rula o singură dată la montarea componentei
 
-
-     
-
-    let subtitle
-    const [modalIsOpen, setIsOpen] = React.useState(false)
-
-    const openModal = () => {
+      
+      let subtitle
+      const [modalIsOpen, setIsOpen] = React.useState(false)
+      
+      const openModal = () => {
         setIsOpen(true)
-    }
-
-
-    const closeModal = () => {
+      }
+      
+      
+      const closeModal = () => {
         setIsOpen(false);
       }
+      
+            const onChange = (e) => {
+              setFormData((prevState) => ({
+                ...prevState,
+                [e.target.name]: e.target.value,
+              }));
+            };
 
+            useEffect(() => {
+              if (isMounted) {
+                onAuthStateChanged(auth, (user) => {
+                  if (user) {
+                    setFormData({ ...formData, userRef: user.uid });
+                  } else {
+                    navigate("/sign-in");
+                  }
+                });
+              }
+  
+              return () => {
+                isMounted.current = false;
+              };
+              // eslint-disable-next-line react-hooks/exhaustive-deps
+            }, [isMounted]);
+          
+            const onSubmit = async (e) => {
+              e.preventDefault();
+        
+              const formDataCopy = {
+                ...formData,
+                status: 'In Progress',
+              }
+          
+              const docRef = await addDoc(collection(db, 'listings'), formDataCopy)
+          
+              const updatedListings = listings.filter((listing) => listing.id !== listing.id)
+      setListings(updatedListings)
+              setLoading(false)
+              toast.success('Listing saved')
+              console.log(formDataCopy.type, docRef.id);
+              navigate(`/progress`);
+            };
 
   return (
     <>
-    <div className=''>
-    <div className='mt-6'>
-    <h1 className='max-w-lg text-4xl font-semibold leading-relaxed text-gray-900 dark:text-white inline-block'>My All Tasks <span className='text-xl text-gray-500'>({listings.length})</span></h1>
-    <button  onClick={openModal} className='btn btn-primary float-right'>                    <svg className="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd"></path></svg>
+    <div className='p-4 sm:ml-64'>
+    <div className='p-4 rounded-lg dark:border-gray-700 mt-14'>
+    <h1 className='max-w-lg text-4xl font-semibold leading-relaxed text-gray-900 dark:text-white inline-block  me-4'>My All Tasks <span className='text-xl text-gray-500'>({listings.length})</span></h1>
+    <button  onClick={openModal} className='btn btn-primary'> 
+      <svg className="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd"></path></svg>
     New Task</button>
     </div>
 
@@ -107,16 +153,16 @@ function Home() {
                     <span className="sr-only">Close modal</span>
                 </button>
             </div>
-            <form className="p-4 md:p-5">
+            <form className="p-4 md:p-5" onSubmit={onSubmit}>
                 <div className="grid gap-4 mb-4 grid-cols-2">
                     <div className="col-span-2">
                         <label for="title" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Title</label>
-                        <input type="text" name="title" id="title" value={title} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Type task name" required="" />
+                        <input type="text" name="title" id="title" value={title} onChange={onChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Type task name" required="" />
                     </div>
 
                     <div className="col-span-2 sm:col-span-1">
                         <label for="importance" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Importance</label>
-                        <select id="importance"  value={importance} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                        <select id="importance" name='importance' onChange={onChange}   value={importance} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                             <option selected="" disabled>Select importance</option>
                             <option value="low">Low</option>
                             <option value="medium">Medium</option>
@@ -126,13 +172,13 @@ function Home() {
 
                     <div className="col-span-2 sm:col-span-1">
                         <label for="importance" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Date picker</label>
-                        <input type="date" id='date' value={date} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Select date" />
+                        <input type="date" id='date' name='date' value={formData.date} onChange={onChange}  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Select date" />
 
                     </div>
                     
                     <div className="col-span-2">
                         <label for="description" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Description</label>
-                        <textarea id="description"  value={description} rows="4" className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Write task description here"></textarea>                    
+                        <textarea id="description" name='description' onChange={onChange}  value={description} rows="4" className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Write task description here"></textarea>                    
                     </div>
                 </div>
                 <button type="submit" className="btn btn-primary w-full">
